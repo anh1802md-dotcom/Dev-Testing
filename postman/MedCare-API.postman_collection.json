@@ -1,0 +1,540 @@
+{
+  "info": {
+    "name": "API MedCare",
+    "description": "Bộ API MedCare — SQL Server\n\n**Thứ tự gọi thử:**\n1. Chạy backend: `cd backend && npm start`\n2. **Kiểm tra kết nối** → phải trả 200\n3. **Xác thực → Đăng nhập (Admin)** hoặc **Đăng nhập (Bác sĩ)** → lưu token\n4. Các request còn lại (trừ Cổng bệnh nhân)\n5. **Cổng bệnh nhân**: chạy **Đăng nhập (Bệnh nhân)** trước\n6. **Bác sĩ mới**: **Đăng ký bác sĩ** → **Đăng nhập (Bác sĩ)**\n\n**Lỗi thường gặp:**\n- Không gửi được request → backend chưa chạy\n- `401` → chưa đăng nhập hoặc token hết hạn\n- `403` Cổng bệnh nhân → đang dùng token admin/bác sĩ, cần token bệnh nhân\n- `404` thông báo → chạy **Danh sách thông báo** trước (tự cập nhật `notificationId`)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "token", "value": "" },
+    { "key": "patientId", "value": "p1" },
+    { "key": "prescriptionId", "value": "rx1" },
+    { "key": "notificationId", "value": "n1" },
+    { "key": "userId", "value": "u1" },
+    { "key": "doctorEmail", "value": "bs.nguyenminh@hospital.vn" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Kiểm tra hệ thống",
+      "item": [
+        {
+          "name": "Kiểm tra kết nối",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/health",
+            "description": "Kiểm tra backend và SQL Server có hoạt động không."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Xác thực",
+      "item": [
+        {
+          "name": "Đăng nhập (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  pm.test('Đăng nhập thành công', () => pm.expect(json.token).to.be.a('string'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@demo.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Đăng nhập admin hoặc bác sĩ. Token tự lưu vào biến `token`."
+          }
+        },
+        {
+          "name": "Đăng ký bệnh nhân",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user.{{$timestamp}}@email.com\",\n  \"password\": \"123456\",\n  \"name\": \"Nguyễn Bệnh Nhân\",\n  \"role\": \"user\",\n  \"phone\": \"0911222333\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Tạo tài khoản bệnh nhân mới. Email dùng timestamp để tránh trùng."
+          }
+        },
+        {
+          "name": "Đăng nhập (Bệnh nhân)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  pm.collectionVariables.set('userId', json.user.id);",
+                  "  pm.test('Đăng nhập bệnh nhân thành công', () => pm.expect(json.user.role).to.eql('user'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user.test@email.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Dùng sau **Đăng ký bệnh nhân**, hoặc tài khoản đã có. Cần token này để gọi **Cổng bệnh nhân**."
+          }
+        },
+        {
+          "name": "Đăng ký bác sĩ",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('doctorEmail', json.user.email);",
+                  "  pm.collectionVariables.set('userId', json.user.id);",
+                  "  pm.test('Đăng ký bác sĩ thành công', () => pm.expect(json.user.role).to.eql('doctor'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"bs.{{$timestamp}}@hospital.vn\",\n  \"password\": \"123456\",\n  \"name\": \"BS. Test API\",\n  \"role\": \"doctor\",\n  \"department\": \"Nội khoa\",\n  \"title\": \"Bác sĩ\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Tạo tài khoản bác sĩ mới (role: doctor). Email tự lưu vào `doctorEmail` — dùng cho **Đăng nhập (Bác sĩ)**."
+          }
+        },
+        {
+          "name": "Đăng nhập (Bác sĩ)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  pm.collectionVariables.set('userId', json.user.id);",
+                  "  pm.test('Đăng nhập bác sĩ thành công', () => pm.expect(json.user.role).to.eql('doctor'));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{doctorEmail}}\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Đăng nhập bác sĩ. Mặc định: `bs.nguyenminh@hospital.vn` / `123456`. Sau **Đăng ký bác sĩ**, biến `doctorEmail` tự cập nhật."
+          }
+        },
+        {
+          "name": "Thông tin tài khoản",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "Lấy thông tin người đang đăng nhập."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bệnh nhân",
+      "item": [
+        {
+          "name": "Danh sách bệnh nhân",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/patients?search=&status=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "patients"],
+              "query": [
+                { "key": "search", "value": "", "description": "Tìm theo tên, mã, SĐT" },
+                { "key": "status", "value": "", "description": "stable | monitoring | emergency | pending" },
+                { "key": "department", "value": "", "disabled": true, "description": "Chuyên khoa" }
+              ]
+            },
+            "description": "Lấy danh sách tất cả bệnh nhân."
+          }
+        },
+        {
+          "name": "Chi tiết bệnh nhân",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/patients/{{patientId}}",
+            "description": "Xem hồ sơ một bệnh nhân theo `patientId`."
+          }
+        },
+        {
+          "name": "Tạo bệnh nhân mới",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('patientId', pm.response.json().data.id);",
+                  "  pm.test('Tạo bệnh nhân thành công', () => pm.expect(pm.response.code).to.eql(201));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nguyễn Test API\",\n  \"phone\": \"0911222333\",\n  \"birth\": \"1995-01-15\",\n  \"gender\": \"Nam\",\n  \"department\": \"Tim mạch\",\n  \"note\": \"Tạo từ Postman\"\n}"
+            },
+            "url": "{{baseUrl}}/api/patients",
+            "description": "Thêm bệnh nhân mới vào SQL."
+          }
+        },
+        {
+          "name": "Cập nhật bệnh nhân",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"stable\",\n  \"note\": \"Cập nhật từ Postman\"\n}"
+            },
+            "url": "{{baseUrl}}/api/patients/{{patientId}}",
+            "description": "Cập nhật trạng thái hoặc thông tin bệnh nhân."
+          }
+        },
+        {
+          "name": "Xóa bệnh nhân",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/patients/{{patientId}}",
+            "description": "Xóa bệnh nhân và dữ liệu liên quan (toa, bệnh án…)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Toa thuốc",
+      "item": [
+        {
+          "name": "Danh sách toa thuốc",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/prescriptions?patientId={{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "prescriptions"],
+              "query": [{ "key": "patientId", "value": "{{patientId}}", "description": "Lọc theo bệnh nhân" }]
+            },
+            "description": "Lấy danh sách toa thuốc, có thể lọc theo bệnh nhân."
+          }
+        },
+        {
+          "name": "Chi tiết toa thuốc",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/prescriptions/{{prescriptionId}}",
+            "description": "Xem một toa thuốc theo `prescriptionId`."
+          }
+        },
+        {
+          "name": "Tạo toa thuốc",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('prescriptionId', pm.response.json().data.id);",
+                  "  pm.test('Tạo toa thành công', () => pm.expect(pm.response.code).to.eql(201));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"name\": \"Paracetamol\",\n  \"dosage\": \"500mg\",\n  \"frequency\": \"3 lần/ngày\",\n  \"intakeTime\": \"Sau ăn\",\n  \"times\": [\"08:00\", \"14:00\", \"20:00\"],\n  \"status\": \"pending\",\n  \"startDate\": \"2026-06-01\",\n  \"note\": \"Khi sốt\"\n}"
+            },
+            "url": "{{baseUrl}}/api/prescriptions",
+            "description": "Kê toa thuốc mới cho bệnh nhân."
+          }
+        },
+        {
+          "name": "Xác nhận toa đang dùng",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}"
+            },
+            "url": "{{baseUrl}}/api/prescriptions/{{prescriptionId}}",
+            "description": "Bác sĩ xác nhận toa thuốc đang được sử dụng."
+          }
+        },
+        {
+          "name": "Xóa toa thuốc",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/prescriptions/{{prescriptionId}}",
+            "description": "Xóa toa thuốc và lịch nhắc liên quan."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Hồ sơ bệnh án",
+      "item": [
+        {
+          "name": "Danh sách bệnh án",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/medical-records?patientId={{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "medical-records"],
+              "query": [{ "key": "patientId", "value": "{{patientId}}", "description": "Lọc theo bệnh nhân" }]
+            },
+            "description": "Lấy danh sách hồ sơ bệnh án."
+          }
+        },
+        {
+          "name": "Tạo hồ sơ bệnh án",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"title\": \"Khám lại\",\n  \"diagnosis\": \"Ổn định\",\n  \"visitDate\": \"2026-06-21\",\n  \"symptoms\": \"Không sốt\",\n  \"treatment\": \"Tiếp tục thuốc\",\n  \"vitals\": \"HA 120/80\"\n}"
+            },
+            "url": "{{baseUrl}}/api/medical-records",
+            "description": "Thêm hồ sơ khám/chẩn đoán mới."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Người dùng",
+      "item": [
+        {
+          "name": "Danh sách người dùng",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users",
+            "description": "Admin xem tất cả tài khoản hệ thống."
+          }
+        },
+        {
+          "name": "Chi tiết người dùng",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users/{{userId}}",
+            "description": "Xem thông tin một tài khoản theo `userId`."
+          }
+        },
+        {
+          "name": "Đổi vai trò (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"user\",\n  \"title\": \"Bệnh nhân\"\n}"
+            },
+            "url": "{{baseUrl}}/api/users/{{userId}}",
+            "description": "Admin đổi vai trò: admin | doctor | user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cổng bệnh nhân",
+      "item": [
+        {
+          "name": "Dữ liệu cổng bệnh nhân",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/portal",
+            "description": "Chỉ dùng token vai trò **bệnh nhân**. Chạy **Đăng nhập (Bệnh nhân)** trước. Admin/bác sĩ sẽ lỗi 403."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Thông báo",
+      "item": [
+        {
+          "name": "Danh sách thông báo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const list = pm.response.json().data || [];",
+                  "  if (list.length) pm.collectionVariables.set('notificationId', list[0].id);",
+                  "  pm.test('Lấy danh sách thành công', () => pm.expect(pm.response.code).to.eql(200));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications?unreadOnly=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications"],
+              "query": [{ "key": "unreadOnly", "value": "false", "description": "true = chỉ chưa đọc" }]
+            },
+            "description": "Lấy danh sách thông báo. Tự cập nhật `notificationId` từ thông báo đầu tiên."
+          }
+        },
+        {
+          "name": "Đánh dấu đã đọc",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+            "description": "Đánh dấu một thông báo là đã đọc."
+          }
+        },
+        {
+          "name": "Tạo thông báo",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Thông báo test\",\n  \"message\": \"Nội dung từ Postman\",\n  \"type\": \"info\",\n  \"icon\": \"info\"\n}"
+            },
+            "url": "{{baseUrl}}/api/notifications",
+            "description": "Tạo thông báo mới trong hệ thống."
+          }
+        },
+        {
+          "name": "Xóa thông báo",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/notifications/{{notificationId}}",
+            "description": "Xóa thông báo theo `notificationId`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Đồng bộ",
+      "item": [
+        {
+          "name": "Kéo toàn bộ dữ liệu",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/sync",
+            "description": "Lấy một lần: bệnh nhân, toa, bệnh án, lịch sử, lịch nhắc, thông báo."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lịch sử uống thuốc",
+      "item": [
+        {
+          "name": "Danh sách lịch sử",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/history",
+            "description": "Xem lịch sử xác nhận uống thuốc."
+          }
+        },
+        {
+          "name": "Thêm lịch sử uống thuốc",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"rxId\": \"{{prescriptionId}}\",\n  \"medName\": \"Aspirin\",\n  \"status\": \"taken\",\n  \"confirmed\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/history",
+            "description": "Ghi nhận đã uống / bỏ qua / chưa uống (status: taken | skipped | not_taken)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lịch nhắc",
+      "item": [
+        {
+          "name": "Danh sách lịch nhắc",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/reminders",
+            "description": "Xem tất cả lịch nhắc uống thuốc."
+          }
+        },
+        {
+          "name": "Đồng bộ lịch nhắc theo toa",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"times\": [\"08:00\", \"20:00\"],\n  \"active\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/reminders/rx/{{prescriptionId}}",
+            "description": "Cập nhật giờ nhắc cho một toa thuốc."
+          }
+        }
+      ]
+    }
+  ]
+}

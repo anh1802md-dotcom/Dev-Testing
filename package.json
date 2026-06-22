@@ -1,0 +1,30 @@
+{
+  "name": "baitest",
+  "version": "1.0.0",
+  "description": "MedCare — quản lý hồ sơ bệnh nhân & lịch sử dùng thuốc (localStorage)",
+  "private": true,
+  "scripts": {
+    "start": "serve . -l 3000",
+    "start:open": "start http://localhost:3000 && npm start",
+    "test": "vitest run",
+    "test:ci": "npm test && npm run test:e2e",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:junit": "playwright test --reporter=junit",
+    "test:validate-cod1": "node tools/validate-cod1-tests.js",
+    "jira:export": "node tools/export-jira-test-cases.js",
+    "jmeter:generate": "node tools/generate-jmeter-plan.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "jsdom": "^29.1.1",
+    "serve": "^14.2.6",
+    "vitest": "^4.1.8"
+  }
+}

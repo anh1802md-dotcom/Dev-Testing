@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Healthcare Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+</head>
+<body>
+  <!-- AUTH -->
+  <div id="screen-auth" class="screen active">
+    <div class="auth-shell">
+      <div class="auth-top">
+        <div class="auth-logo">💊</div>
+        <h1 class="auth-app-name">Healthcare</h1>
+        <p class="auth-tagline">Management System</p>
+      </div>
+      <div class="auth-card">
+        <div class="auth-tabs">
+          <button type="button" class="auth-tab active" data-auth="login" data-i18n="auth.login">Đăng nhập</button>
+          <button type="button" class="auth-tab" data-auth="register" data-i18n="auth.register">Đăng ký</button>
+        </div>
+        <form id="form-login" class="auth-form">
+          <label class="field-label"><span data-i18n="auth.email">Email</span><input type="email" name="email" required placeholder="admin@demo.com" autocomplete="username"></label>
+          <label class="field-label"><span data-i18n="auth.password">Mật khẩu</span><input type="password" name="password" required placeholder="123456" autocomplete="current-password"></label>
+          <button type="button" class="link-btn" id="btn-forgot" data-i18n="auth.forgot">Quên mật khẩu?</button>
+          <button type="submit" class="btn btn-dark btn-block" data-i18n="auth.login">Đăng nhập</button>
+          <p class="auth-hint" data-i18n-html="auth.hint">Admin: admin@demo.com / 123456<br>Bác sĩ: bs.nguyenminh@hospital.vn / 123456<br><small>Cần chạy backend API (npm start trong thư mục backend)</small></p>
+        </form>
+        <form id="form-register" class="auth-form hidden">
+          <p class="auth-hint" style="margin-bottom:0.75rem;text-align:left">Đăng ký tài khoản <strong>Bệnh nhân</strong> — xem lịch uống thuốc & thông báo của bạn</p>
+          <label class="field-label"><span data-i18n="auth.name">Họ tên</span><input type="text" name="name" required placeholder="Nguyễn Văn A"></label>
+          <label class="field-label"><span>Số điện thoại</span><input type="tel" name="phone" placeholder="0912345678"></label>
+          <label class="field-label"><span data-i18n="auth.email">Email</span><input type="email" name="email" required></label>
+          <label class="field-label"><span data-i18n="auth.password">Mật khẩu</span><input type="password" name="password" required minlength="6"></label>
+          <input type="hidden" name="role" value="user">
+          <button type="submit" class="btn btn-dark btn-block">Đăng ký bệnh nhân</button>
+        </form>
+        <form id="form-forgot" class="auth-form hidden">
+          <label class="field-label"><span data-i18n="auth.forgotEmail">Email đăng ký</span><input type="email" name="email" required></label>
+          <p class="auth-hint" data-i18n="auth.otpHint">Mã OTP demo sẽ hiện trên màn hình</p>
+          <button type="submit" class="btn btn-dark btn-block" data-i18n="auth.sendOtp">Gửi OTP</button>
+          <button type="button" class="btn btn-outline btn-block" data-back-login data-i18n="auth.backLogin">Quay lại đăng nhập</button>
+        </form>
+        <form id="form-otp" class="auth-form hidden">
+          <label class="field-label"><span data-i18n="auth.otp">Mã OTP</span><input type="text" name="otp" maxlength="6" required placeholder="6 số"></label>
+          <label class="field-label"><span data-i18n="auth.newPassword">Mật khẩu mới</span><input type="password" name="password" required minlength="6"></label>
+          <button type="submit" class="btn btn-dark btn-block" data-i18n="auth.resetPassword">Đặt lại mật khẩu</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="screen-app" class="screen">
+    <main id="app-main" class="app-main">
+      <!-- Dashboard -->
+      <section id="view-home" class="view active staff-only">
+        <div class="page-hero">
+          <div class="page-hero-row">
+            <div class="hero-greeting">
+              <h2 id="dash-greeting">Chào buổi sáng</h2>
+              <p class="doctor-name" id="dash-doctor">Bác sĩ</p>
+            </div>
+            <button type="button" class="page-hero-btn" aria-label="Yêu thích">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat-card"><span class="stat-icon">👤</span><div class="stat-num" id="stat-patients">0</div><div class="stat-label" data-i18n="dash.statPatients">Tổng bệnh nhân</div></div>
+            <div class="hero-stat-card"><span class="stat-icon">📅</span><div class="stat-num" id="stat-today">0</div><div class="stat-label" data-i18n="dash.statToday">Hẹn hôm nay</div></div>
+            <div class="hero-stat-card"><span class="stat-icon">💊</span><div class="stat-num" id="stat-rx">0</div><div class="stat-label" data-i18n="dash.statRx">Đơn thuốc</div></div>
+            <div class="hero-stat-card"><span class="stat-icon">📊</span><div class="stat-num" id="stat-reports">0</div><div class="stat-label" data-i18n="dash.statReports">Báo cáo</div></div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="section-block">
+            <h3 data-i18n="dash.quickAccess">Truy cập nhanh</h3>
+            <div class="quick-list" style="margin-top:0.75rem">
+              <button type="button" class="quick-row" data-goto="patients">
+                <span class="quick-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                <span data-i18n="dash.patientList">Danh sách bệnh nhân</span>
+                <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+              <button type="button" class="quick-row" data-goto="rx">
+                <span class="quick-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.5 20.5 3 13l7.5-7.5 7.5 7.5-7.5 7.5z"/></svg></span>
+                <span data-i18n="dash.manageRx">Quản lý thuốc</span>
+                <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+              <button type="button" class="quick-row" data-goto="schedule">
+                <span class="quick-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+                <span data-i18n="dash.reminders">Nhắc nhở</span>
+                <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="section-block">
+            <div class="section-head">
+              <h3 data-i18n="dash.recentPatients">Bệnh nhân gần đây</h3>
+              <button type="button" class="text-link" data-goto="patients" data-i18n="dash.viewAll">Xem tất cả →</button>
+            </div>
+            <div id="recent-patients" class="recent-list"></div>
+          </div>
+          <div class="tip-card">
+            <div class="tip-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+            <div>
+              <h4 data-i18n="dash.healthTip">Mẹo sức khỏe hôm nay</h4>
+              <p data-i18n="dash.healthTipText">Uống đủ 2 lít nước mỗi ngày giúp cơ thể hoạt động tốt hơn và cải thiện sức khỏe tim mạch.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Patients -->
+      <section id="view-patients" class="view staff-only">
+        <div class="page-hero">
+          <div class="page-hero-row">
+            <div class="page-hero-left">
+              <div class="page-hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+              <div>
+                <h2 data-i18n="patient.title">Bệnh nhân</h2>
+                <p class="hero-sub" id="patient-count">0 bệnh nhân</p>
+              </div>
+            </div>
+            <button type="button" class="page-hero-btn" id="btn-add-patient" data-i18n-title="patient.add" title="Thêm bệnh nhân" style="font-size:1.25rem;font-weight:700">+</button>
+          </div>
+          <div class="hero-search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" id="search-patient" data-i18n-placeholder="patient.search" placeholder="Tìm kiếm bệnh nhân..." autocomplete="off">
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="chip-row" id="patient-status-chips">
+            <button type="button" class="chip active" data-pstatus="" data-i18n="filter.all">Tất cả</button>
+            <button type="button" class="chip" data-pstatus="stable" data-i18n="status.stable">Ổn định</button>
+            <button type="button" class="chip" data-pstatus="monitoring" data-i18n="status.monitoring">Theo dõi</button>
+            <button type="button" class="chip" data-pstatus="emergency" data-i18n="status.emergency">Khẩn cấp</button>
+            <button type="button" class="chip" data-pstatus="pending" data-i18n="status.pending">Chưa xác nhận</button>
+          </div>
+          <div id="patient-list" class="card-list"></div>
+        </div>
+      </section>
+
+      <!-- Patient Detail (full page) -->
+      <section id="view-patient-detail" class="view staff-only">
+        <button type="button" class="back-bar" id="btn-back-patients">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          <span data-i18n="patient.back">Quay lại danh sách</span>
+        </button>
+        <div id="patient-detail-hero" class="patient-hero"></div>
+        <div class="detail-tabs" id="patient-detail-tabs">
+          <button type="button" class="detail-tab active" data-ptab="info" data-i18n="patient.tabInfo">Thông tin</button>
+          <button type="button" class="detail-tab" data-ptab="records" data-i18n="patient.tabRecords">Hồ sơ bệnh án</button>
+          <button type="button" class="detail-tab" data-ptab="rx" data-i18n="patient.tabRx">Toa thuốc</button>
+        </div>
+        <div id="patient-tab-info" class="detail-panel active"></div>
+        <div id="patient-tab-records" class="detail-panel"></div>
+        <div id="patient-tab-rx" class="detail-panel"></div>
+        <div class="detail-actions" id="patient-detail-actions">
+          <button type="button" class="btn btn-primary btn-block" id="btn-claim-patient-detail" data-i18n="patient.claimManage">Xác nhận quản lý</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-release-patient-detail" data-i18n="patient.releaseManage">Bỏ quản lý</button>
+          <button type="button" class="btn btn-primary btn-block" id="btn-admin-assign-doctor-detail" data-i18n="patient.adminAssignDoctor" style="display:none">Thay bác sĩ</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-admin-release-patient-detail" data-i18n="patient.adminReleaseManage" style="display:none">Bỏ quản lý BS</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-edit-patient-detail" data-i18n="patient.edit">Sửa hồ sơ</button>
+          <button type="button" class="btn btn-primary btn-block" id="btn-add-record-detail" data-i18n="patient.addRecord">+ Thêm bệnh án</button>
+          <button type="button" class="btn btn-danger btn-block" id="btn-delete-patient-detail" data-i18n="patient.delete">Xóa bệnh nhân</button>
+        </div>
+      </section>
+
+      <!-- Medical Records -->
+      <section id="view-records" class="view staff-only">
+        <div class="page-hero">
+          <div class="page-hero-left">
+            <div class="page-hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div><h2 data-i18n="records.title">Hồ sơ bệnh án</h2><p class="hero-sub" data-i18n="records.sub">Chẩn đoán & điều trị</p></div>
+          </div>
+        </div>
+        <div class="page-body">
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" id="search-records" class="search-input" data-i18n-placeholder="records.search" placeholder="Tìm bệnh án, chẩn đoán..." autocomplete="off">
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-add-record" data-i18n="records.add">+ Thêm</button>
+        </div>
+        <select id="filter-records-patient" class="select-sm filter-full">
+          <option value="" data-i18n="records.allPatients">Tất cả bệnh nhân</option>
+        </select>
+        <div id="records-list" class="card-list"></div>
+        </div>
+      </section>
+
+      <!-- Prescriptions -->
+      <section id="view-rx" class="view staff-only">
+        <div class="page-hero">
+          <div class="page-hero-left">
+            <div class="page-hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.5 20.5 3 13l7.5-7.5 7.5 7.5-7.5 7.5z"/></svg></div>
+            <div>
+              <h2 data-i18n="rx.title">Quản lý thuốc</h2>
+              <p class="hero-sub" id="rx-count">0 đơn thuốc</p>
+            </div>
+          </div>
+          <div class="rx-hero-stats">
+            <div class="rx-hero-stat"><strong id="rx-stat-active">0</strong><span data-i18n="rx.active">Đang dùng</span></div>
+            <div class="rx-hero-stat"><strong id="rx-stat-low">0</strong><span data-i18n="rx.low">Sắp hết</span></div>
+            <div class="rx-hero-stat"><strong id="rx-stat-total">0</strong><span data-i18n="rx.total">Tổng đơn</span></div>
+          </div>
+        </div>
+        <div class="page-body">
+          <input type="search" id="search-rx" class="search-input filter-full" data-i18n-placeholder="rx.search" placeholder="Tìm thuốc..." autocomplete="off" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.75rem 1rem;width:100%">
+          <div id="rx-list" class="card-list"></div>
+          <button type="button" class="btn btn-gradient btn-block" data-goto="schedule" style="margin-top:0.75rem" data-i18n="rx.viewSchedule">Xem lịch nhắc nhở uống thuốc</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-add-rx" style="margin-top:0.5rem" data-i18n="rx.add">+ Thêm toa thuốc</button>
+        </div>
+      </section>
+
+      <!-- Schedule -->
+      <section id="view-schedule" class="view staff-only">
+        <div class="page-hero">
+          <div class="page-hero-left">
+            <div class="page-hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div><h2 data-i18n="schedule.title">Lịch nhắc</h2><p class="hero-sub" data-i18n="schedule.sub">Giờ uống thuốc hôm nay</p></div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="chip-row" id="schedule-status-chips">
+            <button type="button" class="chip active" data-sstatus="" data-i18n="filter.all">Tất cả</button>
+            <button type="button" class="chip" data-sstatus="pending" data-i18n="status.notTaken">Chưa uống</button>
+            <button type="button" class="chip" data-sstatus="taken" data-i18n="status.taken">Đã uống</button>
+            <button type="button" class="chip" data-sstatus="skipped" data-i18n="status.skipped">Bỏ qua</button>
+          </div>
+          <div id="schedule-list" class="card-list"></div>
+        </div>
+      </section>
+
+      <!-- History -->
+      <section id="view-history" class="view staff-only">
+        <div class="page-hero">
+          <div class="page-hero-left">
+            <div class="page-hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div><h2 data-i18n="history.title">Lịch sử dùng thuốc</h2><p class="hero-sub" data-i18n="history.sub">Theo dõi uống thuốc</p></div>
+          </div>
+        </div>
+        <div class="page-body">
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" id="search-history" class="search-input" data-i18n-placeholder="history.search" placeholder="Tìm lịch sử..." autocomplete="off">
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-export-history" data-i18n="history.export">Xuất</button>
+        </div>
+        <input type="date" id="filter-history-date" class="input-date">
+        <div class="chip-row" id="history-status-chips">
+          <button type="button" class="chip active" data-status="" data-i18n="filter.all">Tất cả</button>
+          <button type="button" class="chip" data-status="taken" data-i18n="status.taken">Đã uống</button>
+          <button type="button" class="chip" data-status="skipped" data-i18n="status.skipped">Bỏ qua</button>
+        </div>
+        <div id="history-list" class="card-list"></div>
+        </div>
+      </section>
+
+      <!-- Reports -->
+      <section id="view-reports" class="view staff-only">
+        <div class="page-hero">
+          <div class="page-hero-left">
+            <div class="page-hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+            <div><h2 data-i18n="reports.title">Báo cáo</h2><p class="hero-sub" data-i18n="reports.sub">Thống kê & biểu đồ</p></div>
+          </div>
+        </div>
+        <div class="page-body">
+        <div class="chart-wrap"><canvas id="chart-doses"></canvas></div>
+        <div class="chart-wrap"><canvas id="chart-meds"></canvas></div>
+        <button type="button" class="btn btn-primary btn-block" id="btn-export-pdf" data-i18n="reports.exportPdf">Xuất báo cáo PDF</button>
+        <button type="button" class="btn btn-outline btn-block" id="btn-share-report" data-i18n="reports.share">Chia sẻ báo cáo</button>
+        </div>
+      </section>
+
+      <!-- USER PORTAL (bệnh nhân) -->
+      <section id="view-user-home" class="view user-only">
+        <div class="page-hero user-hero">
+          <div class="page-hero-row">
+            <div class="hero-greeting">
+              <h2 id="user-dash-greeting">Xin chào</h2>
+              <p class="doctor-name" id="user-dash-name">Bệnh nhân</p>
+            </div>
+          </div>
+          <div class="hero-stats user-hero-stats">
+            <div class="hero-stat-card"><span class="stat-icon">💊</span><div class="stat-num" id="user-stat-rx">0</div><div class="stat-label">Thuốc đang dùng</div></div>
+            <div class="hero-stat-card"><span class="stat-icon">⏰</span><div class="stat-num" id="user-stat-today">0</div><div class="stat-label">Lịch hôm nay</div></div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="section-block">
+            <h3>Lịch uống thuốc hôm nay</h3>
+            <div id="user-today-schedule" class="card-list"></div>
+          </div>
+          <div class="tip-card">
+            <div class="tip-icon">💡</div>
+            <div>
+              <h4>Lưu ý</h4>
+              <p id="user-portal-hint">Uống thuốc đúng giờ theo chỉ định của bác sĩ. Liên hệ phòng khám nếu có tác dụng phụ.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-user-meds" class="view user-only">
+        <div class="page-hero user-hero">
+          <div class="page-hero-left">
+            <div class="page-hero-icon">💊</div>
+            <div><h2>Toa thuốc của tôi</h2><p class="hero-sub" id="user-meds-sub">Đơn thuốc từ bác sĩ</p></div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div id="user-meds-list" class="card-list"></div>
+        </div>
+      </section>
+
+      <section id="view-user-schedule" class="view user-only">
+        <div class="page-hero user-hero">
+          <div class="page-hero-left">
+            <div class="page-hero-icon">📅</div>
+            <div><h2>Lịch nhắc uống thuốc</h2><p class="hero-sub">Các khung giờ trong ngày</p></div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div id="user-schedule-list" class="card-list"></div>
+        </div>
+      </section>
+
+      <!-- Notifications -->
+      <section id="view-notifications" class="view">
+        <div class="page-hero">
+          <div class="page-hero-left">
+            <div class="page-hero-icon" style="position:relative">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <span id="notif-header-badge" class="badge-dot hidden">0</span>
+            </div>
+            <div>
+              <h2 data-i18n="notif.title">Thông báo</h2>
+              <p class="hero-sub" id="notif-unread-text">0 thông báo chưa đọc</p>
+            </div>
+          </div>
+        </div>
+        <div class="page-body">
+          <div class="chip-row" id="notif-filter-chips">
+            <button type="button" class="chip active" data-nfilter="all" data-i18n="notif.all">Tất cả</button>
+            <button type="button" class="chip" data-nfilter="unread">Chưa đọc (<span id="notif-chip-count">0</span>)</button>
+          </div>
+          <div id="notif-list" class="card-list"></div>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-mark-all-read" style="margin-top:0.75rem" data-i18n="notif.markAll">Đánh dấu tất cả là đã đọc</button>
+          <button type="button" class="btn btn-ghost btn-block" id="btn-clear-notif" style="margin-top:0.5rem" data-i18n="notif.clearRead">Xóa đã đọc</button>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section id="view-settings" class="view">
+        <div class="page-hero">
+          <div class="page-hero-left">
+            <div class="page-hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+            <div><h2 data-i18n="settings.title">Cài đặt</h2><p class="hero-sub" data-i18n="settings.sub">Quản lý tài khoản</p></div>
+          </div>
+          <div class="settings-profile" id="settings-profile"></div>
+        </div>
+        <div class="page-body">
+          <div class="settings-group">
+            <h3 data-i18n="settings.ui">Giao diện</h3>
+            <label class="settings-row toggle-row">
+              <span class="row-left"><span class="row-icon">🌙</span><span data-i18n="settings.dark">Chế độ tối</span></span>
+              <input type="checkbox" id="setting-dark" class="toggle" checked disabled>
+            </label>
+          </div>
+          <div class="settings-group admin-only hidden" id="settings-doctors-group">
+            <h3 data-i18n="settings.doctors">Quản lý bác sĩ</h3>
+            <button type="button" class="settings-row" id="btn-add-doctor">
+              <span class="row-left"><span class="row-icon">➕</span><span data-i18n="settings.addDoctor">Thêm tài khoản bác sĩ</span></span>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <div id="doctor-accounts-list" class="doctor-accounts-list"></div>
+          </div>
+          <div class="settings-group">
+            <h3 data-i18n="settings.account">Tài khoản</h3>
+            <button type="button" class="settings-row" id="btn-profile-info">
+              <span class="row-left"><span class="row-icon">👤</span><span data-i18n="settings.profile">Thông tin cá nhân</span></span>
+              <span class="row-value" id="settings-name-val">— <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
+            </button>
+            <button type="button" class="settings-row" id="btn-lang-row">
+              <span class="row-left"><span class="row-icon">🌐</span><span data-i18n="settings.language">Ngôn ngữ</span></span>
+              <span class="row-value" id="settings-lang-val">Tiếng Việt <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
+            </button>
+            <button type="button" class="settings-row" id="btn-change-pw">
+              <span class="row-left"><span class="row-icon">🔒</span><span data-i18n="settings.changePw">Đổi mật khẩu</span></span>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <label class="settings-row toggle-row">
+              <span class="row-left"><span class="row-icon">🔐</span><span data-i18n="settings.otp">Xác thực OTP</span></span>
+              <input type="checkbox" id="setting-otp" class="toggle">
+            </label>
+          </div>
+          <div class="settings-group">
+            <h3 data-i18n="settings.app">Ứng dụng</h3>
+            <label class="settings-row toggle-row">
+              <span class="row-left"><span class="row-icon">🔔</span><span data-i18n="settings.notif">Thông báo</span></span>
+              <span class="row-value" id="notif-toggle-label" style="margin-right:0.5rem">Đã bật</span>
+              <input type="checkbox" id="setting-notif" class="toggle" checked>
+            </label>
+            <label class="settings-row toggle-row">
+              <span class="row-left"><span class="row-icon">🔊</span><span data-i18n="settings.sound">Âm thanh thông báo</span></span>
+              <input type="checkbox" id="setting-sound" class="toggle" checked>
+            </label>
+            <button type="button" class="settings-row staff-only" data-goto="history">
+              <span class="row-left"><span class="row-icon">📋</span><span data-i18n="settings.history">Lịch sử dùng thuốc</span></span>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button type="button" class="settings-row staff-only" data-goto="records">
+              <span class="row-left"><span class="row-icon">📁</span><span data-i18n="settings.medRecords">Hồ sơ bệnh án</span></span>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button type="button" class="settings-row" data-goto="reports">
+              <span class="row-left"><span class="row-icon">📊</span><span data-i18n="settings.reports">Báo cáo & thống kê</span></span>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <div class="settings-group">
+            <h3 data-i18n="settings.support">Hỗ trợ</h3>
+            <button type="button" class="settings-row" id="btn-help">
+              <span class="row-left"><span class="row-icon">❓</span><span data-i18n="settings.help">Trợ giúp & Hỗ trợ</span></span>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button type="button" class="settings-row" id="btn-backup">
+              <span class="row-left"><span class="row-icon">☁️</span><span data-i18n="settings.backup">Sao lưu dữ liệu</span></span>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button type="button" class="settings-row" id="btn-restore">
+              <span class="row-left"><span class="row-icon">📥</span><span data-i18n="settings.restore">Khôi phục dữ liệu</span></span>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <input type="file" id="input-restore" accept=".json" class="hidden">
+            <button type="button" class="settings-row" id="btn-sync">
+              <span class="row-left"><span class="row-icon">🔄</span><span data-i18n="settings.sync">Đồng bộ dữ liệu</span></span>
+              <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <button type="button" class="logout-row" id="btn-logout">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span data-i18n="settings.logout">Đăng xuất</span>
+          </button>
+          <div class="app-version">Healthcare Management System<br><span data-i18n="settings.version">Phiên bản 1.0.0</span></div>
+          <select id="setting-lang" class="hidden"><option value="vi">Tiếng Việt</option><option value="en">English</option></select>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav staff-only" id="nav-staff" data-i18n-title="nav.menu" aria-label="Menu chính">
+      <div class="sidebar-brand">
+        <span class="sidebar-logo" aria-hidden="true">🏥</span>
+        <div class="sidebar-titles">
+          <strong>Healthcare</strong>
+          <small>Management System</small>
+        </div>
+      </div>
+      <button type="button" class="nav-item active" data-view="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <small data-i18n="nav.home">Trang chủ</small>
+      </button>
+      <button type="button" class="nav-item" data-view="patients">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <small data-i18n="nav.patients">Bệnh nhân</small>
+      </button>
+      <button type="button" class="nav-item" data-view="rx">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.5 20.5 3 13l7.5-7.5 7.5 7.5-7.5 7.5z"/></svg>
+        <small data-i18n="nav.rx">Thuốc</small>
+      </button>
+      <button type="button" class="nav-item" data-view="notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="nav-notif-badge" class="nav-badge hidden">0</span>
+        <small data-i18n="nav.notifications">Thông báo</small>
+      </button>
+      <button type="button" class="nav-item" data-view="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <small data-i18n="nav.settings">Cài đặt</small>
+      </button>
+    </nav>
+
+    <nav class="bottom-nav user-only hidden" id="nav-user" aria-label="Menu bệnh nhân">
+      <div class="sidebar-brand">
+        <span class="sidebar-logo" aria-hidden="true">💊</span>
+        <div class="sidebar-titles">
+          <strong>MedCare</strong>
+          <small>Cổng bệnh nhân</small>
+        </div>
+      </div>
+      <button type="button" class="nav-item active" data-view="user-home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <small>Trang chủ</small>
+      </button>
+      <button type="button" class="nav-item" data-view="user-meds">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.5 20.5 3 13l7.5-7.5 7.5 7.5-7.5 7.5z"/></svg>
+        <small>Thuốc</small>
+      </button>
+      <button type="button" class="nav-item" data-view="user-schedule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <small>Lịch nhắc</small>
+      </button>
+      <button type="button" class="nav-item" data-view="notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+        <small>Thông báo</small>
+      </button>
+      <button type="button" class="nav-item" data-view="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>
+        <small>Cài đặt</small>
+      </button>
+    </nav>
+  </div>
+
+  <div id="modal" class="modal hidden" role="dialog">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel">
+      <header class="modal-head">
+        <h3 id="modal-title">Tiêu đề</h3>
+        <button type="button" class="modal-close" aria-label="Đóng">×</button>
+      </header>
+      <div id="modal-body" class="modal-body"></div>
+      <footer id="modal-foot" class="modal-foot"></footer>
+    </div>
+  </div>
+
+  <div id="confirm-dialog" class="confirm-dialog hidden" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="confirm-backdrop"></div>
+    <div class="confirm-panel">
+      <button type="button" class="confirm-close" aria-label="Đóng">×</button>
+      <div class="confirm-icon-ring" id="confirm-icon-ring">
+        <div class="confirm-icon" id="confirm-icon" aria-hidden="true"></div>
+      </div>
+      <h3 id="confirm-title" class="confirm-title">Xác nhận</h3>
+      <p id="confirm-message" class="confirm-message"></p>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-ghost confirm-btn-cancel" id="confirm-cancel">Hủy</button>
+        <button type="button" class="btn confirm-btn-ok" id="confirm-ok">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite">
+    <div class="toast-glow" aria-hidden="true"></div>
+    <div class="toast-icon" id="toast-icon" aria-hidden="true">✓</div>
+    <span id="toast-msg" class="toast-msg"></span>
+  </div>
+
+  <script src="cod1/load-order.js"></script>
+  <script src="js/loader.js"></script>
+</body>
+</html>

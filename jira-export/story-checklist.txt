@@ -1,0 +1,37 @@
+CHECKLIST — Link Test ↔ Story COD1 trên Jira
+Đánh dấu [x] khi hoàn thành từng Story.
+
+[ ] COD1-70 — Đăng ký tài khoản (1 E2E)
+[ ] COD1-71 — Đăng nhập hệ thống (3 E2E)
+[ ] COD1-72 — Chỉnh sửa toa thuốc (1 E2E)
+[ ] COD1-74 — Tạo hồ sơ bệnh nhân (1 E2E + 1 unit)
+[ ] COD1-75 — Cập nhật hồ sơ BN (1 unit)
+[ ] COD1-76 — Xóa hồ sơ bệnh nhân (1 E2E + 2 unit)
+[ ] COD1-77 — Tạo lịch nhắc thuốc (1 unit)
+[ ] COD1-78 — Thêm toa thuốc (1 E2E + 2 unit)
+[ ] COD1-80 — Lưu lịch sử dùng thuốc (1 unit)
+[ ] COD1-81 — Xem lịch sử dùng thuốc (2 unit)
+[ ] COD1-82 — Tìm kiếm bệnh nhân (2 E2E)
+[ ] COD1-83 — Lọc danh sách thuốc (2 unit)
+[ ] COD1-84 — Xem báo cáo sử dụng thuốc (2 E2E)
+[ ] COD1-86 — Đồng bộ dữ liệu (2 unit)
+[ ] COD1-87 — Gửi push notification (1 unit)
+[ ] COD1-88 — Đổi mật khẩu (1 E2E)
+[ ] COD1-92 — Lập lịch thông báo (1 unit)
+[ ] COD1-100 — Backup dữ liệu (1 E2E + 1 unit)
+[ ] COD1-101 — Ghi nhận đã uống thuốc (1 unit)
+[ ] COD1-102 — Khôi phục dữ liệu (1 E2E + 1 unit)
+[ ] COD1-104 — Ghi nhận bỏ qua thuốc (1 unit)
+[ ] COD1-120 — Quản lý phiên đăng nhập (1 E2E)
+[ ] COD1-122 — Phân quyền admin (1 unit)
+[ ] COD1-123 — Phân quyền bác sĩ (1 unit)
+[ ] COD1-125 — Nhận bệnh nhân (1 unit)
+[ ] COD1-127 — Nhật ký hoạt động (1 unit)
+[ ] COD1-131 — Xem chi tiết bệnh nhân (1 E2E)
+
+Tổng: 41 Test Case · 27 Story COD1
+
+Sau khi tạo Test trên Jira:
+1. Mở Story COD1-XXX → tab Tests (Xray) → Add Tests
+2. Hoặc: Test → Link → chọn Story
+3. Chạy npm run test:ci → đính kèm playwright-report/ hoặc import junit.xml

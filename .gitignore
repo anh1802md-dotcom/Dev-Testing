@@ -1,0 +1,10 @@
+node_modules/
+backend/node_modules/
+backend/.env
+playwright-report/
+test-results/
+coverage/
+.env
+*.log
+jmeter/results/
+Dev-Testing/
