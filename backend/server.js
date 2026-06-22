@@ -18,7 +18,7 @@ const historyRoutes = require("./routes/history");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({ origin: true, methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] }));
 app.use(express.json());
 
 app.get("/", (_req, res) => {

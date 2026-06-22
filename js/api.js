@@ -47,6 +47,9 @@ const MedApi = (function () {
       throw networkError();
     }
     const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+    if (BASE.includes("ngrok")) {
+      headers["ngrok-skip-browser-warning"] = "true";
+    }
     if (!options.noAuth) {
       const token = getToken();
       if (token) headers.Authorization = "Bearer " + token;
