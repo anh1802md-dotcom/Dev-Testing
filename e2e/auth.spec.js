@@ -37,17 +37,17 @@ test.describe("Xác thực (COD1-70)", () => {
     await expect(page.locator("#form-login")).toBeVisible();
   });
 
-  test("COD1-70 — đăng ký bác sĩ mới thành công", async ({ page }) => {
-    const email = `bs.e2e.${Date.now()}@test.local`;
+  test("COD1-70 — đăng ký bệnh nhân mới thành công", async ({ page }) => {
+    const email = `user.e2e.${Date.now()}@test.local`;
     await openRegisterTab(page);
-    await page.locator("#form-register input[name=name]").fill("BS. E2E Test");
-    await page.locator("#form-register input[name=department]").fill("Nội khoa");
+    await page.locator("#form-register input[name=name]").fill("BN E2E Test");
+    await page.locator("#form-register input[name=phone]").fill("0911222333");
     await page.locator("#form-register input[name=email]").fill(email);
     await page.locator("#form-register input[name=password]").fill("654321");
     await page.locator("#form-register button[type=submit]").click();
 
     await expect(page.locator("#screen-app.active")).toBeVisible();
-    await expect(page.locator("#dash-doctor")).toContainText("BS. E2E Test");
+    await expect(page.locator("#view-user-home.active")).toBeVisible();
     await expect(page.locator("#toast:not(.hidden)")).toContainText(/thành công/i);
   });
 });

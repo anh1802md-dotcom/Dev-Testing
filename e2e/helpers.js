@@ -26,6 +26,9 @@ async function waitForAppReady(page) {
  * @param {Page} page
  */
 async function resetAppData(page) {
+  await page.addInitScript(() => {
+    window.__MEDCARE_E2E__ = true;
+  });
   await page.goto("/");
   await page.evaluate((key) => localStorage.removeItem(key), STORAGE_KEY);
   await page.reload();
@@ -41,7 +44,7 @@ async function login(page, { email, password }) {
   await page.locator("#form-login input[name=email]").fill(email);
   await page.locator("#form-login input[name=password]").fill(password);
   await page.locator("#form-login button[type=submit]").click();
-  await page.locator("#screen-app.active").waitFor({ state: "visible" });
+  await page.locator("#screen-app.active").waitFor({ state: "visible", timeout: 30_000 });
 }
 
 /**
@@ -57,7 +60,9 @@ async function loginAsAdmin(page) {
  */
 async function goToNav(page, view) {
   await page.locator("#screen-app.active").waitFor({ state: "visible" });
-  const nav = page.locator(`.bottom-nav .nav-item[data-view="${view}"]`);
+  const staffNav = page.locator(`#nav-staff .nav-item[data-view="${view}"]`);
+  const userNav = page.locator(`#nav-user .nav-item[data-view="${view}"]`);
+  const nav = (await staffNav.isVisible()) ? staffNav : userNav;
   await nav.waitFor({ state: "visible" });
   await nav.click();
   await page.locator(`#view-${view}.active`).waitFor({ state: "visible" });

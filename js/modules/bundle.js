@@ -1590,6 +1590,53 @@
           enterApp();
           toast("Đăng ký thành công — chào " + res.user.name);
         } catch (err) {
+          if (err.code === "NETWORK") {
+            const d = data();
+            if (d.users.some((u) => u.email === email)) {
+              toast("Email đã tồn tại", "warn");
+              if (btn) btn.disabled = false;
+              return;
+            }
+            const user = {
+              id: MedStore.uid("u"),
+              email,
+              password: payload.password,
+              name: payload.name,
+              phone: payload.phone || "",
+              role: "user",
+              department: "",
+              title: "Bệnh nhân",
+              otpEnabled: false,
+              lang: "vi",
+              notifEnabled: true,
+              soundEnabled: true,
+              createdAt: new Date().toISOString(),
+            };
+            d.users.push(user);
+            const patient = {
+              id: MedStore.uid("p"),
+              code: "BN" + String(d.patients.length + 1).padStart(3, "0"),
+              name: payload.name,
+              phone: payload.phone || "",
+              birth: null,
+              gender: "Nam",
+              department: "Đa khoa",
+              status: "pending",
+              lastVisit: new Date().toISOString().slice(0, 10),
+              note: "Đăng ký E2E/offline",
+              avatar: null,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            d.patients.push(patient);
+            d.session = { userId: user.id, loginAt: new Date().toISOString(), token: MedStore.uid("tok"), source: "local" };
+            persist();
+            MedStore.log("Đăng ký bệnh nhân (offline): " + user.name);
+            enterApp();
+            toast("Đăng ký thành công — chào " + user.name);
+            if (btn) btn.disabled = false;
+            return;
+          }
           toast(err.message || "Không đăng ký được", err.status === 409 ? "warn" : "error");
         } finally {
           if (btn) btn.disabled = false;

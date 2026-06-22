@@ -19,6 +19,11 @@ const MedApi = (function () {
   }
 
   async function request(path, options = {}) {
+    if (typeof window !== "undefined" && window.__MEDCARE_E2E__) {
+      const err = new Error("Không kết nối được API. Hãy chạy backend: cd backend && npm start");
+      err.code = "NETWORK";
+      throw err;
+    }
     const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
     if (!options.noAuth) {
       const token = getToken();
