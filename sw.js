@@ -1,5 +1,5 @@
 const CACHE = "medcare-pwa-v1";
-const SHELL = ["/", "/index.html", "/css/app.css", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
+const SHELL = ["/", "/index.html", "/css/app.css", "/manifest.webmanifest", "/icons/icon-180.png", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
